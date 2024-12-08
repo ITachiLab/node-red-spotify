@@ -1,0 +1,25 @@
+{
+  "name": "@itachilab/node-red-spotify",
+  "version": "0.0.0",
+  "description": "The Node-RED node for interacting with Spotify.",
+  "main": "node-red-spotify.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ITachiLab/node-red-spotify.git"
+  },
+  "keywords": [
+    "node red",
+    "node-red",
+    "node",
+    "spotify"
+  ],
+  "author": "Itachi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ITachiLab/node-red-spotify/issues"
+  },
+  "homepage": "https://github.com/ITachiLab/node-red-spotify#readme"
+}
