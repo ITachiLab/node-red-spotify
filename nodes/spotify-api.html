@@ -15,7 +15,48 @@
       return this.name || "New Spotify API";
     },
     oneditprepare: function () {
-      $("#node-config-input-redirect_uri").val("http://localhost:8080/spotify/oauth")
+      const state = crypto.randomUUID();
+      let continueInterval;
+
+      $("#node-config-input-redirect_uri").val("http://localhost:1880/spotify/oauth");
+
+      $("#sign-in").on("click", function () {
+        const params = new URLSearchParams();
+
+        params.append("client_id", $("#node-config-input-client_id").val());
+        params.append("response_type", "code");
+        params.append("redirect_uri", $("#node-config-input-redirect_uri").val());
+        params.append("state", state);
+        params.append("scope",
+            "user-modify-playback-state,user-read-playback-state,user-read-currently-playing");
+
+        window.open("https://accounts.spotify.com/authorize?" + params.toString());
+
+        continueInterval = setInterval(() => {
+          fetch("/spotify/oauth/continue?" + new URLSearchParams({
+            client_id: $("#node-config-input-client_id").val(),
+            state: state,
+            secret: $("#node-config-input-client_secret").val()
+          }).toString()).then(res => {
+            if (res.status === 200) {
+              return res.json();
+            } else if (res.status === 202) {
+              return Promise.resolve({});
+            } else {
+              return Promise.reject(res.status);
+            }
+          }).then(json => {
+            if ("access_token" in json && "refresh_token" in json) {
+              $("#node-config-input-access_token").val(json.access_token);
+              $("#node-config-input-refresh_token").val(json.refresh_token);
+
+              clearInterval(continueInterval);
+            }
+          }).catch(err => {
+            clearInterval(continueInterval);
+          });
+        }, 5000);
+      })
     }
   });
 </script>
@@ -23,7 +64,9 @@
 <script type="text/html" data-template-name="spotify-api">
   <div class="form-row">
     <h2>Mandatory section</h2>
-    <div>The fields in this section are mandatory, and must be provided manually before initiating OAuth flow.</div>
+    <div>The fields in this section are mandatory, and must be provided manually before initiating
+      OAuth flow.
+    </div>
   </div>
   <div class="form-row">
     <label for="node-config-input-name"><i class="fa fa-bookmark"></i> Name</label>
@@ -43,8 +86,13 @@
     <input type="password" id="node-config-input-client_secret">
   </div>
   <div class="form-row">
+    <button id="sign-in" type="button" class="red-ui-button">Sign in to Spotify</button>
+  </div>
+  <div class="form-row">
     <h2>Tokens sections</h2>
-    <div>Access token and refresh token will be populated automatically upon a successful OAuth authentication.</div>
+    <div>Access token and refresh token will be populated automatically upon a successful OAuth
+      authentication.
+    </div>
   </div>
   <div class="form-row">
     <label for="node-config-input-access_token"><i class="fa fa-lock"></i> Access token</label>
