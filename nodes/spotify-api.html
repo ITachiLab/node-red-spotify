@@ -1,0 +1,116 @@
+<script type="text/javascript">
+  (() => {
+    function getAuthorizationParams(state) {
+      const params = new URLSearchParams();
+
+      params.append("client_id", $("#node-config-input-client_id").val());
+      params.append("response_type", "code");
+      params.append("redirect_uri", $("#node-config-input-redirect_uri").val());
+      params.append("state", state);
+      params.append("scope",
+          "user-modify-playback-state,user-read-playback-state,user-read-currently-playing");
+
+      return params.toString();
+    }
+
+    function getTokens(state) {
+      fetch("/spotify/oauth/continue?" + new URLSearchParams({
+        client_id: $("#node-config-input-client_id").val(),
+        state: state,
+        secret: $("#node-config-input-client_secret").val()
+      }).toString()).then(res => {
+        if (res.status === 200) {
+          // OAuth flow was successful, the tokens are in the response body
+          return res.json();
+        } else if (res.status === 202) {
+          // Request was valid, but the authorization code hadn't been received yet
+          return Promise.resolve({});
+        } else {
+          // Unknown response
+          return Promise.reject(res.status);
+        }
+      }).then(json => {
+        if ("credentials" in json) {
+          $("#node-config-input-access_token").val(json.credentials.access_token);
+          $("#node-config-input-refresh_token").val(json.credentials.refresh_token);
+
+          RED.notify("Authentication successful. You can save the configuration now.", {type: "success"});
+        } else {
+          setTimeout(() => getTokens(state), 2000);
+        }
+      }).catch(err => {
+        RED.notify("Authentication error: " + err, {type: "error"});
+      });
+    }
+
+    function signInCallback() {
+      const state = crypto.randomUUID();
+
+      setTimeout(() => getTokens(state), 2000);
+      window.open("https://accounts.spotify.com/authorize?" + getAuthorizationParams(state));
+    }
+
+    RED.nodes.registerType('spotify-api', {
+      category: 'config',
+      defaults: {
+        name: {value: "My Spotify API", required: true}
+      },
+      credentials: {
+        client_id: {required: true},
+        redirect_uri: {required: true},
+        client_secret: {required: true, type: "password"},
+        access_token: {required: true, type: "password"},
+        refresh_token: {required: true, type: "password"},
+      },
+      label: function () {
+        return this.name || "New Spotify API";
+      },
+      oneditprepare: function () {
+        $("#node-config-input-redirect_uri").val("http://localhost:1880/spotify/oauth");
+        $("#sign-in").on("click", signInCallback);
+      }
+    });
+  })();
+</script>
+
+<script type="text/html" data-template-name="spotify-api">
+  <div class="form-row">
+    <h2>API configuration</h2>
+    <div>The fields in this section are mandatory, and must be provided manually before initiating
+      OAuth flow.
+    </div>
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-name"><i class="fa fa-bookmark"></i> Name</label>
+    <input type="text" id="node-config-input-name">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-client_id"><i class="fa fa-id-badge"></i> Client ID</label>
+    <input type="text" id="node-config-input-client_id">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-redirect_uri"><i class="fa fa-undo"></i> Redirect URI</label>
+    <input type="text" id="node-config-input-redirect_uri" readonly>
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-client_secret"><i class="fa fa-key"></i> Client secret</label>
+    <input type="password" id="node-config-input-client_secret">
+  </div>
+  <div class="form-row">
+    <button id="sign-in" type="button" class="red-ui-button">Sign in to Spotify</button>
+  </div>
+  <div class="form-row">
+    <h2>Tokens</h2>
+    <div>Access token and refresh token will be populated automatically upon a successful OAuth
+      authentication.
+    </div>
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-access_token"><i class="fa fa-lock"></i> Access token</label>
+    <input type="password" id="node-config-input-access_token" readonly>
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-refresh_token"><i class="fa fa-refresh"></i> Refresh token</label>
+    <input type="password" id="node-config-input-refresh_token" readonly>
+  </div>
+</script>

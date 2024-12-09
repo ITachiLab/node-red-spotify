@@ -3,7 +3,7 @@
     category: 'spotify',
     color: '#87A980',
     defaults: {
-      name: {value: ""}
+      api: { value: "", type: "spotify-api" },
     },
     inputs: 1,
     outputs: 1,
@@ -14,10 +14,10 @@
   });
 </script>
 
-<script type="text/html" data-template-name="lower-case">
+<script type="text/html" data-template-name="spotify">
   <div class="form-row">
-    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-    <input type="text" id="node-input-name" placeholder="Name">
+    <label for="node-input-api"><i class="fa fa-server"></i> Spotify API</label>
+    <input type="text" id="node-input-api" placeholder="">
   </div>
 </script>
 
