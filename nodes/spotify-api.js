@@ -3,8 +3,12 @@ const SpotifyWebApi = require('spotify-web-api-node');
 module.exports = function (RED) {
   let tokenMap = {};
 
-  function RemoteServerNode(config) {
+  function SpotifyApiConfig(config) {
     RED.nodes.createNode(this, config);
+
+    this.spotifyWebApi = new SpotifyWebApi();
+    this.spotifyWebApi.setAccessToken(this.credentials.access_token);
+    this.spotifyWebApi.setRefreshToken(this.credentials.refresh_token);
   }
 
   RED.httpAdmin.get("/spotify/oauth", (req, res) => {
@@ -38,8 +42,9 @@ module.exports = function (RED) {
 
       spotifyApi.authorizationCodeGrant(code).then(data => {
         res.json({
-          access_token: data.body["access_token"],
-          refresh_token: data.body["refresh_token"]
+          credentials: {
+            ...data.body
+          }
         });
       }).catch(err => {
         res.status(500).send(err.message);
@@ -49,10 +54,8 @@ module.exports = function (RED) {
     }
   })
 
-  RED.nodes.registerType("spotify-api", RemoteServerNode, {
+  RED.nodes.registerType("spotify-api", SpotifyApiConfig, {
     credentials: {
-      client_id: {type: "string"},
-      client_secret: {type: "password"},
       access_token: {type: "password"},
       refresh_token: {type: "password"},
     }
