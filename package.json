@@ -23,7 +23,8 @@
   "node-red": {
     "nodes": {
       "spotify": "nodes/spotify.js",
-      "spotify-api": "nodes/spotify-api.js"
+      "spotify-api": "nodes/spotify-api.js",
+      "devices": "nodes/devices.js"
     }
   },
   "homepage": "https://github.com/ITachiLab/node-red-spotify#readme",
