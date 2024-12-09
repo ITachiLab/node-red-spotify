@@ -1,0 +1,26 @@
+<script type="text/javascript">
+  (() => {
+    RED.nodes.registerType('devices', {
+      category: 'spotify',
+      color: '#87A980',
+      defaults: {
+        api: { value: "", type: "spotify-api" },
+      },
+      inputs: 1,
+      outputs: 1,
+      icon: "font-awesome/fa-headphones",
+      label: "devices"
+    });
+  })();
+</script>
+
+<script type="text/html" data-template-name="devices">
+  <div class="form-row">
+    <label for="node-input-api"><i class="fa fa-server"></i> Spotify API</label>
+    <input type="text" id="node-input-api" placeholder="">
+  </div>
+</script>
+
+<script type="text/html" data-help-name="devices">
+  <p>Get all available devices when triggered by a message.</p>
+</script>
