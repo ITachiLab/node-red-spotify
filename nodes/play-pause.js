@@ -10,14 +10,15 @@ module.exports = function (RED) {
 
     node.on('input', function (msg) {
       const play = !!msg.topic;
-      const devices = Array.isArray(msg.payload) ? msg.payload : [msg.payload];
 
-      for (const device of devices) {
-        if (play) {
-          node.api.play({device_id: device.id});
-        } else {
-          node.api.pause({device_id: device.id});
-        }
+      if (play) {
+        node.api.play({device_id: msg.payload.id}).catch(err => {
+          node.warn("Could not resume playback on a device: " + err);
+        });
+      } else {
+        node.api.pause({device_id: msg.payload.id}).catch(err => {
+          node.warn("Could not resume playback on a device: " + err);
+        });
       }
     });
   }
