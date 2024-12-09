@@ -21,6 +21,20 @@
   </div>
 </script>
 
-<script type="text/html" data-help-name="play/pause">
-  <p>Play or pause the device.</p>
+<script type="text/markdown" data-help-name="play/pause">
+Play or pause playback on a device.
+
+### Inputs
+
+: payload (object)  : the device object to control.
+: *topic* (boolean) : `true` to resume playback, or `false` to pause.
+
+### Details
+
+`msg.payload` is used to select the target device, and must contain at least the `id` property which
+uniquely identifies the device. The **devices** node can be used as an input, provided that its
+output is filtered through the **split** node which splits the array of devices into separate
+messages.
+
+The `msg.topic` controls whether the device should resume or pause playback.
 </script>
