@@ -1,11 +1,13 @@
 <script type="text/javascript">
   (() => {
+    let pollTimeout = null;
+
     function getAuthorizationParams(state) {
       const params = new URLSearchParams();
 
-      params.append("client_id", $("#node-config-input-client_id").val());
+      params.append("client_id", $("#node-config-input-clientId").val());
       params.append("response_type", "code");
-      params.append("redirect_uri", $("#node-config-input-redirect_uri").val());
+      params.append("redirect_uri", $("#node-config-input-redirectUri").val());
       params.append("state", state);
       params.append("scope",
           "user-modify-playback-state,user-read-playback-state,user-read-currently-playing");
@@ -13,11 +15,10 @@
       return params.toString();
     }
 
-    function getTokens(state) {
+    function getTokens(state, nodeId) {
       fetch("/spotify/oauth/continue?" + new URLSearchParams({
-        client_id: $("#node-config-input-client_id").val(),
-        state: state,
-        secret: $("#node-config-input-client_secret").val()
+        state,
+        nodeId
       }).toString()).then(res => {
         if (res.status === 200) {
           // OAuth flow was successful, the tokens are in the response body
@@ -30,24 +31,30 @@
           return Promise.reject(res.status);
         }
       }).then(json => {
-        if ("credentials" in json) {
-          $("#node-config-input-access_token").val(json.credentials.access_token);
-          $("#node-config-input-refresh_token").val(json.credentials.refresh_token);
+        if ("tokens" in json) {
+          $("#node-config-input-refreshToken").val(json.tokens.refresh_token);
 
-          RED.notify("Authentication successful. You can save the configuration now.", {type: "success"});
+          RED.notify("Authentication successful. You can save the configuration now.",
+              {type: "success"});
         } else {
-          setTimeout(() => getTokens(state), 2000);
+          pollTimeout = setTimeout(() => getTokens(state, nodeId), 2000);
         }
       }).catch(err => {
         RED.notify("Authentication error: " + err, {type: "error"});
       });
     }
 
-    function signInCallback() {
+    function signInCallback(nodeId) {
       const state = crypto.randomUUID();
 
-      setTimeout(() => getTokens(state), 2000);
+      pollTimeout = setTimeout(() => getTokens(state, nodeId), 2000);
       window.open("https://accounts.spotify.com/authorize?" + getAuthorizationParams(state));
+    }
+
+    function isValidPristine(node) {
+      return node.id !== null
+          && node.credentials.has_clientSecret
+          && !node.credentials.clientSecret;
     }
 
     RED.nodes.registerType('spotify-api', {
@@ -55,19 +62,34 @@
       defaults: {
         name: {value: "My Spotify API", required: true}
       },
+      // Access token should not be a part of credentials, because it changes frequently anyway.
+      // The parameters below are enough to request new access tokens anytime we want.
       credentials: {
-        client_id: {required: true},
-        redirect_uri: {required: true},
-        client_secret: {required: true, type: "password"},
-        access_token: {required: true, type: "password"},
-        refresh_token: {required: true, type: "password"},
+        // Redirect URI and Client ID can be ordinary text fields because they aren't sensitive
+        // data.
+        redirectUri: {required: true, type: "text"},
+        clientId: {required: true, type: "text"},
+        clientSecret: {required: true, type: "password"},
+        refreshToken: {type: "password"},
       },
       label: function () {
         return this.name || "New Spotify API";
       },
+      oneditcancel: () => clearTimeout(pollTimeout),
+      oneditsave: () => clearTimeout(pollTimeout),
       oneditprepare: function () {
-        $("#node-config-input-redirect_uri").val("http://localhost:1880/spotify/oauth");
-        $("#sign-in").on("click", signInCallback);
+        const node = this;
+        debugger;
+
+        // TODO: Get rid of that hardcoded URI.
+        $("#node-config-input-redirectUri").val("http://localhost:1880/spotify/oauth");
+
+        if (isValidPristine(node)) {
+          $("#sign-in").on("click", () => signInCallback(node.id));
+        } else {
+          $("#sign-in").prop("disabled", true);
+          $("#new-data-warning").removeClass("hide");
+        }
       }
     });
   })();
@@ -85,32 +107,33 @@
     <input type="text" id="node-config-input-name">
   </div>
   <div class="form-row">
-    <label for="node-config-input-client_id"><i class="fa fa-id-badge"></i> Client ID</label>
-    <input type="text" id="node-config-input-client_id">
+    <label for="node-config-input-redirectUri"><i class="fa fa-undo"></i> Redirect URI</label>
+    <input type="text" id="node-config-input-redirectUri" readonly>
   </div>
   <div class="form-row">
-    <label for="node-config-input-redirect_uri"><i class="fa fa-undo"></i> Redirect URI</label>
-    <input type="text" id="node-config-input-redirect_uri" readonly>
+    <label for="node-config-input-clientId"><i class="fa fa-id-badge"></i> Client ID</label>
+    <input type="text" id="node-config-input-clientId">
   </div>
   <div class="form-row">
-    <label for="node-config-input-client_secret"><i class="fa fa-key"></i> Client secret</label>
-    <input type="password" id="node-config-input-client_secret">
+    <label for="node-config-input-clientSecret"><i class="fa fa-key"></i> Client secret</label>
+    <input type="password" id="node-config-input-clientSecret">
   </div>
   <div class="form-row">
     <button id="sign-in" type="button" class="red-ui-button">Sign in to Spotify</button>
+    <p id="new-data-warning" class="hide">
+      It looks like you've provided new credentials. Before you can initiate the authentication
+      process, you have to save the configuration node first, deploy your changes, edit it the
+      configuration node again, and then the button will be active.
+    </p>
   </div>
   <div class="form-row">
     <h2>Tokens</h2>
-    <div>Access token and refresh token will be populated automatically upon a successful OAuth
-      authentication.
+    <div>
+      The refresh token will be populated automatically upon a successful OAuth authentication.
     </div>
   </div>
   <div class="form-row">
-    <label for="node-config-input-access_token"><i class="fa fa-lock"></i> Access token</label>
-    <input type="password" id="node-config-input-access_token" readonly>
-  </div>
-  <div class="form-row">
-    <label for="node-config-input-refresh_token"><i class="fa fa-refresh"></i> Refresh token</label>
-    <input type="password" id="node-config-input-refresh_token" readonly>
+    <label for="node-config-input-refreshToken"><i class="fa fa-refresh"></i> Refresh token</label>
+    <input type="password" id="node-config-input-refreshToken" readonly>
   </div>
 </script>

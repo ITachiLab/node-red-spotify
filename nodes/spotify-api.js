@@ -5,10 +5,34 @@ module.exports = function (RED) {
 
   function SpotifyApiConfig(config) {
     RED.nodes.createNode(this, config);
+    const node = this;
 
-    this.spotifyWebApi = new SpotifyWebApi();
-    this.spotifyWebApi.setAccessToken(this.credentials.access_token);
-    this.spotifyWebApi.setRefreshToken(this.credentials.refresh_token);
+    if (node.credentials.refreshToken) {
+      node.spotifyWebApi = new SpotifyWebApi(node.credentials);
+      node.refreshTimeout = null;
+
+      refreshToken();
+
+      node.on("close", () => {
+        clearTimeout(node.refreshTimeout);
+      });
+    }
+
+    function refreshToken() {
+      node.spotifyWebApi.refreshAccessToken().then(data => {
+        console.log("Refresh tokens");
+
+        const {
+          access_token: accessToken,
+          expires_in: expiresIn,
+        } = data.body;
+
+        node.spotifyWebApi.setAccessToken(accessToken);
+
+        clearTimeout(node.refreshTimeout);
+        node.refreshTimeout = setTimeout(refreshToken, expiresIn / 2 * 1000);
+      });
+    }
   }
 
   RED.httpAdmin.get("/spotify/oauth", (req, res) => {
@@ -23,28 +47,22 @@ module.exports = function (RED) {
   });
 
   RED.httpAdmin.get("/spotify/oauth/continue", (req, res) => {
-    const state = req.query.state || null;
-    const secret = req.query.secret || null;
-    const clientId = req.query.client_id || null;
+    const {state, nodeId} = req.query;
 
-    if (secret == null || clientId == null || state == null) {
+    if (state === null || nodeId === null) {
       res.sendStatus(400);
-    } else if (!(state in tokenMap)) {
+    } if (!(state in tokenMap)) {
       res.sendStatus(202);
     } else {
-      const code = tokenMap[state];
-      const credentials = {
-        clientId: clientId,
-        clientSecret: secret,
-        redirectUri: "http://localhost:1880/spotify/oauth"
-      };
+      const node = RED.nodes.getNode(req.query.nodeId);
+      console.log(node);
+      const credentials = node.credentials;
       const spotifyApi = new SpotifyWebApi(credentials);
+      const code = tokenMap[state];
 
       spotifyApi.authorizationCodeGrant(code).then(data => {
         res.json({
-          credentials: {
-            ...data.body
-          }
+          tokens: {...data.body}
         });
       }).catch(err => {
         res.status(500).send(err.message);
@@ -56,8 +74,10 @@ module.exports = function (RED) {
 
   RED.nodes.registerType("spotify-api", SpotifyApiConfig, {
     credentials: {
-      access_token: {type: "password"},
-      refresh_token: {type: "password"},
+      clientId: {type: "text"},
+      redirectUri: {type: "text"},
+      clientSecret: {type: "password"},
+      refreshToken: {type: "password"}
     }
   });
 }
