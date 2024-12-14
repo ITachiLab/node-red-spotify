@@ -1,5 +1,6 @@
 <script type="text/javascript">
   (() => {
+    const pollInterval = 2000;
     let pollTimeout = null;
 
     function getAuthorizationParams(state) {
@@ -22,22 +23,14 @@
       }).toString()).then(res => {
         if (res.status === 200) {
           // OAuth flow was successful, the tokens are in the response body
-          return res.json();
+          RED.notify("Authentication successful. You can save the configuration now.",
+              {type: "success"});
         } else if (res.status === 202) {
-          // Request was valid, but the authorization code hadn't been received yet
-          return Promise.resolve({});
+          // Request was valid, but the authorization code hadn't been received yet, so keep polling
+          pollTimeout = setTimeout(() => getTokens(state, nodeId), pollInterval);
         } else {
           // Unknown response
           return Promise.reject(res.status);
-        }
-      }).then(json => {
-        if ("tokens" in json) {
-          $("#node-config-input-refreshToken").val(json.tokens.refresh_token);
-
-          RED.notify("Authentication successful. You can save the configuration now.",
-              {type: "success"});
-        } else {
-          pollTimeout = setTimeout(() => getTokens(state, nodeId), 2000);
         }
       }).catch(err => {
         RED.notify("Authentication error: " + err, {type: "error"});
@@ -47,14 +40,19 @@
     function signInCallback(nodeId) {
       const state = crypto.randomUUID();
 
-      pollTimeout = setTimeout(() => getTokens(state, nodeId), 2000);
-      window.open("https://accounts.spotify.com/authorize?" + getAuthorizationParams(state));
+      pollTimeout = setTimeout(() => getTokens(state, nodeId), pollInterval);
+      window.open("https://accounts.spotify.com/authorize?" + getAuthorizationParams(state),
+          "popup=true");
     }
 
-    function isValidPristine(node) {
+    function isConfigurationSaved(node) {
       return node.id !== null
           && node.credentials.has_clientSecret
           && !node.credentials.clientSecret;
+    }
+
+    function onEditorLeave() {
+      clearTimeout(pollTimeout);
     }
 
     RED.nodes.registerType('spotify-api', {
@@ -69,14 +67,13 @@
         // data.
         redirectUri: {required: true, type: "text"},
         clientId: {required: true, type: "text"},
-        clientSecret: {required: true, type: "password"},
-        refreshToken: {type: "password"},
+        clientSecret: {required: true, type: "password"}
       },
       label: function () {
         return this.name || "New Spotify API";
       },
-      oneditcancel: () => clearTimeout(pollTimeout),
-      oneditsave: () => clearTimeout(pollTimeout),
+      oneditcancel: onEditorLeave,
+      oneditsave: onEditorLeave,
       oneditprepare: function () {
         const node = this;
         debugger;
@@ -84,7 +81,7 @@
         // TODO: Get rid of that hardcoded URI.
         $("#node-config-input-redirectUri").val("http://localhost:1880/spotify/oauth");
 
-        if (isValidPristine(node)) {
+        if (isConfigurationSaved(node)) {
           $("#sign-in").on("click", () => signInCallback(node.id));
         } else {
           $("#sign-in").prop("disabled", true);
@@ -97,8 +94,8 @@
 
 <script type="text/html" data-template-name="spotify-api">
   <div class="form-row">
-    <h2>API configuration</h2>
-    <div>The fields in this section are mandatory, and must be provided manually before initiating
+    <div>
+      The fields in this section are mandatory, and must be provided manually before initiating
       OAuth flow.
     </div>
   </div>
@@ -125,15 +122,5 @@
       process, you have to save the configuration node first, deploy your changes, edit it the
       configuration node again, and then the button will be active.
     </p>
-  </div>
-  <div class="form-row">
-    <h2>Tokens</h2>
-    <div>
-      The refresh token will be populated automatically upon a successful OAuth authentication.
-    </div>
-  </div>
-  <div class="form-row">
-    <label for="node-config-input-refreshToken"><i class="fa fa-refresh"></i> Refresh token</label>
-    <input type="password" id="node-config-input-refreshToken" readonly>
   </div>
 </script>
