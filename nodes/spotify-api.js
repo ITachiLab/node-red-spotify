@@ -8,16 +8,27 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config);
     const node = this;
 
-    if (node.credentials.refreshToken) {
-      node.spotifyWebApi = new SpotifyWebApi(node.credentials);
+    const credentials = {
+      ...node.credentials,
+      ...credentialsStore.getCredentials(node, RED)
+    }
+
+    if (credentials.refreshToken) {
+      node.spotifyWebApi = new SpotifyWebApi(credentials);
       node.refreshTimeout = null;
 
-      refreshToken();
-
-      node.on("close", () => {
-        clearTimeout(node.refreshTimeout);
-      });
+      refreshTokens();
     }
+
+    node.on("close", (removed, done) => {
+      clearTimeout(node.refreshTimeout);
+
+      if (removed) {
+        credentialsStore.removeCredentials(node, RED);
+      }
+
+      done();
+    });
 
     function refreshTokens() {
       node.spotifyWebApi.refreshAccessToken().then(data => {
