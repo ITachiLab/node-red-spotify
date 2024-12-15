@@ -1,5 +1,6 @@
 const SpotifyWebApi = require('spotify-web-api-node');
 const credentialsStore = require("../lib/credentials.js");
+const successPageContent = require("../lib/success-page.js");
 
 module.exports = function (RED) {
   let tokenMap = {};
@@ -56,19 +57,7 @@ module.exports = function (RED) {
 
     if (state !== null && code !== null) {
       tokenMap[state] = code;
-
-      res.send(`
-        <html lang="en">
-        <body>
-          <script type="text/javascript">
-          (() => {
-            setTimeout(() => window.close(), 2500); 
-          })();
-          </script>
-          <h3>Authentication successful, the window will close shortly.</h3>
-        </body>
-        </html>
-        `)
+      res.send(successPageContent)
     }
   });
 
