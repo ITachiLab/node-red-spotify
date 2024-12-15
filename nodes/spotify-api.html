@@ -1,6 +1,6 @@
 <script type="text/javascript">
   (() => {
-    const pollInterval = 2000;
+    const pollInterval = 1000;
     let pollTimeout = null;
 
     function getAuthorizationParams(state) {
@@ -23,6 +23,7 @@
       }).toString()).then(res => {
         if (res.status === 200) {
           // OAuth flow was successful, the tokens are in the response body
+          $("#node-config-input-oauth").val("AUTH_COMPLETE");
           RED.notify("Authentication successful. You can save the configuration now.",
               {type: "success"});
         } else if (res.status === 202) {
@@ -58,7 +59,8 @@
     RED.nodes.registerType('spotify-api', {
       category: 'config',
       defaults: {
-        name: {value: "My Spotify API", required: true}
+        name: {label: "Name", value: "My Spotify API", required: true},
+        oauth: {label: "OAuth linking", value: "", required: true},
       },
       // Access token should not be a part of credentials, because it changes frequently anyway.
       // The parameters below are enough to request new access tokens anytime we want.
@@ -76,7 +78,6 @@
       oneditsave: onEditorLeave,
       oneditprepare: function () {
         const node = this;
-        debugger;
 
         // TODO: Get rid of that hardcoded URI.
         $("#node-config-input-redirectUri").val("http://localhost:1880/spotify/oauth");
@@ -122,5 +123,8 @@
       process, you have to save the configuration node first, deploy your changes, edit it the
       configuration node again, and then the button will be active.
     </p>
+  </div>
+  <div class="form-row hide">
+    <input type="hidden" id="node-config-input-oauth"/>
   </div>
 </script>
