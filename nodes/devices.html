@@ -21,6 +21,26 @@
   </div>
 </script>
 
-<script type="text/html" data-help-name="devices">
-  <p>Get all available devices when triggered by a message.</p>
+<script type="text/markdown" data-help-name="devices">
+Get all available devices when triggered by arbitrary message.
+
+### Outputs
+
+: payload (object) : details of a device.
+: *topic* (string) : the ID of the device.
+
+### Details
+
+Upon arrival of any message (can come from the simplest "inject" node) the node sends as many
+messages, as there are devices available. The *`msg.topic`* will contain the unique ID of the
+device, and the `msg.payload` will contain details of that device as described in Spotify Web API
+Reference.
+
+This node can be a direct input of other "spotify" nodes. If only a subset of devices should be
+considered, the unwanted devices (messages) can be easily filtered out by using the "switch" node.
+
+### References
+
+- [API Reference](https://developer.spotify.com/documentation/web-api/reference/get-a-users-available-devices) -
+the detailed description of the data found in the `msg.payload`
 </script>

@@ -1,19 +1,33 @@
-module.exports = function (RED) {
-  function SpotifyDevices(config) {
-    RED.nodes.createNode(this, config);
-    const node = this;
-    const apiConfig = RED.nodes.getNode(config.api);
+const SpotifyNode = require('../lib/spotify-node');
 
-    if (apiConfig) {
-      this.api = apiConfig.spotifyWebApi;
+module.exports = function (RED) {
+  class SpotifyDevices extends SpotifyNode {
+    constructor (config) {
+      super(RED, config);
+
+      if (this.api) {
+        this.on('input', this.onInput);
+      }
     }
 
-    node.on('input', function (msg) {
-      node.api.getMyDevices().then(data => {
-        msg.payload = data.body.devices;
-        node.send(msg);
+    onInput (msg, send, done) {
+      const messages = [];
+
+      this.api.getMyDevices().then(data => {
+        for (const dev of data.body.devices) {
+          messages.push({
+            ...msg,
+            topic: dev.id,
+            payload: dev
+          });
+        }
+
+        send([messages]);
+        done();
+      }).catch(err => {
+        done(err);
       });
-    });
+    }
   }
 
   RED.nodes.registerType("devices", SpotifyDevices);
