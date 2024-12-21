@@ -26,15 +26,12 @@ Play or pause playback on a device.
 
 ### Inputs
 
-: payload (object)  : the device object to control.
-: *topic* (boolean) : `true` to resume playback, or `false` to pause.
+: payload (boolean) : `true` to resume playback, or `false` to pause it.
+: *topic* (string)  : the ID of a device to control.
 
 ### Details
 
-`msg.payload` is used to select the target device, and must contain at least the `id` property which
-uniquely identifies the device. The **devices** node can be used as an input, provided that its
-output is filtered through the **split** node which splits the array of devices into separate
-messages.
-
-The `msg.topic` controls whether the device should resume or pause playback.
+`msg.topic` is used to select the target device, and must be a unique identifier as returned from
+the "devices" node. The "devices" node can be used as a direct input, in such case all devices
+returned by that node will be resumed or paused depending on the value of `msg.payload`.
 </script>

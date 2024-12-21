@@ -1,28 +1,28 @@
-module.exports = function (RED) {
-  function SpotifyPlayPause(config) {
-    RED.nodes.createNode(this, config);
-    const node = this;
-    const apiConfig = RED.nodes.getNode(config.api);
+const SpotifyNode = require("../lib/spotify-node");
 
-    if (apiConfig) {
-      this.api = apiConfig.spotifyWebApi;
+module.exports = function (RED) {
+  class SpotifyPlayPause extends SpotifyNode {
+    constructor(config) {
+      super(RED, config);
+
+      this.on('input', this.onInput);
     }
 
-    node.on('input', function (msg) {
-      const play = !!msg.topic;
+    onInput(msg, send, done) {
+      const play = !!msg.payload;
+      const deviceId = msg.topic;
 
       if (play) {
-        node.api.play({device_id: msg.payload.id}).catch(err => {
-          node.warn("Could not resume playback on a device: " + err);
-        });
+        this.api.play({device_id: deviceId})
+            .then(() => done())
+            .catch(err => done(err));
       } else {
-        node.api.pause({device_id: msg.payload.id}).catch(err => {
-          node.warn("Could not resume playback on a device: " + err);
-        });
+        this.api.pause({device_id: deviceId})
+            .then(() => done())
+            .catch(err => done(err));
       }
-    });
+    }
   }
-
 
   RED.nodes.registerType("play/pause", SpotifyPlayPause);
 }
