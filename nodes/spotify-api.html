@@ -56,6 +56,15 @@
       clearTimeout(pollTimeout);
     }
 
+    function getRedirectUri() {
+      let pathname = document.location.pathname;
+      if (pathname.slice(-1) !== "/") {
+        pathname += "/";
+      }
+
+      return location.protocol + "//" + location.host + pathname + "spotify/oauth";
+    }
+
     RED.nodes.registerType('spotify-api', {
       category: 'config',
       defaults: {
@@ -80,7 +89,7 @@
         const node = this;
 
         // TODO: Get rid of that hardcoded URI.
-        $("#node-config-input-redirectUri").val("http://localhost:1880/spotify/oauth");
+        $("#node-config-input-redirectUri").val(getRedirectUri());
 
         if (isConfigurationSaved(node)) {
           $("#sign-in").on("click", () => signInCallback(node.id));
