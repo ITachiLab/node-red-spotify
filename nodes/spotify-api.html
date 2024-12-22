@@ -56,6 +56,15 @@
       clearTimeout(pollTimeout);
     }
 
+    function getRedirectUri() {
+      let pathname = document.location.pathname;
+      if (pathname.slice(-1) !== "/") {
+        pathname += "/";
+      }
+
+      return location.protocol + "//" + location.host + pathname + "spotify/oauth";
+    }
+
     RED.nodes.registerType('spotify-api', {
       category: 'config',
       defaults: {
@@ -80,7 +89,7 @@
         const node = this;
 
         // TODO: Get rid of that hardcoded URI.
-        $("#node-config-input-redirectUri").val("http://localhost:1880/spotify/oauth");
+        $("#node-config-input-redirectUri").val(getRedirectUri());
 
         if (isConfigurationSaved(node)) {
           $("#sign-in").on("click", () => signInCallback(node.id));
@@ -127,4 +136,41 @@
   <div class="form-row hide">
     <input type="hidden" id="node-config-input-oauth"/>
   </div>
+</script>
+
+<script type="text/markdown" data-help-name="spotify-api">
+API configuration for Spotify nodes.
+
+This configuration node maintains a connection to the Spotify Web API. A single configuration node
+can be used to control only one Spotify account. If your intention is to control more accounts,
+you have to create a separate configuration node for each of them.
+
+The authentication is based on the OAuth authorization code grant, so it requires a few extra
+steps before it's fully configured. Once it's done, it should not require any further maintenance
+unless the account has been unlinked deliberately.
+
+### Configuration procedure
+
+First, you have to be in a possession of credentials known as "client ID" and "client secret". To
+get the credentials, you need to create an app on Spotify Developer portal. The detailed
+instruction how to do that can be found in the "Getting started" section of the Spotify Web API
+documentation. The same pair of credentials can be used by more than one configuration node, so
+it's enough to create only one app.
+
+When creating the app, pay attention to the step where you will be asked for the "redirect URI".
+You have to provide the same value which is displayed in the "Redirect URI" field in the
+configuration node's form.
+
+When you put the credentials into the configuration node's form, you have to save it and deploy
+the changes. Only then, the "Sign in to Spotify" button will be enabled. When you click it, you
+will be redirected to the page where you must authorize the app to access the Spotify account.
+Then, if everything went well, a success page should appear. You can now save the configuration
+node, and deploy the flows again.
+
+### References
+
+- [Spotify Developer portal](https://developer.spotify.com/) - the official page for Spotify apps
+developers
+- [Web API getting started](https://developer.spotify.com/documentation/web-api/tutorials/getting-started) -
+a quick introduction to Spotify Web API
 </script>

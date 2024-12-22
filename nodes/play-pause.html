@@ -1,0 +1,37 @@
+<script type="text/javascript">
+  (() => {
+    RED.nodes.registerType('play/pause', {
+      category: 'spotify',
+      color: '#87A980',
+      defaults: {
+        api: { value: "", type: "spotify-api" },
+      },
+      inputs: 1,
+      outputs: 0,
+      icon: "font-awesome/fa-play",
+      label: "play/pause"
+    });
+  })();
+</script>
+
+<script type="text/html" data-template-name="play/pause">
+  <div class="form-row">
+    <label for="node-input-api"><i class="fa fa-server"></i> Spotify API</label>
+    <input type="text" id="node-input-api" placeholder="">
+  </div>
+</script>
+
+<script type="text/markdown" data-help-name="play/pause">
+Play or pause playback on a device.
+
+### Inputs
+
+: payload (boolean) : `true` to resume playback, or `false` to pause it.
+: *topic* (string)  : the ID of a device to control.
+
+### Details
+
+`msg.topic` is used to select the target device, and must be a unique identifier as returned from
+the "devices" node. The "devices" node can be used as a direct input, in such case all devices
+returned by that node will be resumed or paused depending on the value of `msg.payload`.
+</script>
