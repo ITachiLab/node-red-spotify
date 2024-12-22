@@ -1,4 +1,4 @@
-const SpotifyNode = require('../lib/spotify-node');
+const SpotifyNode = require("../lib/spotify-node");
 
 module.exports = function (RED) {
   class SpotifyDevices extends SpotifyNode {
@@ -6,7 +6,7 @@ module.exports = function (RED) {
       super(RED, config);
 
       if (this.api) {
-        this.on('input', this.onInput);
+        this.on("input", this.onInput);
       }
     }
 
@@ -31,4 +31,4 @@ module.exports = function (RED) {
   }
 
   RED.nodes.registerType("devices", SpotifyDevices);
-}
+};

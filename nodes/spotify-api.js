@@ -1,4 +1,4 @@
-const SpotifyWebApi = require('spotify-web-api-node');
+const SpotifyWebApi = require("spotify-web-api-node");
 const credentialsStore = require("../lib/credentials.js");
 const successPageContent = require("../lib/success-page.js");
 
@@ -12,7 +12,7 @@ module.exports = function (RED) {
     const credentials = {
       ...node.credentials,
       ...credentialsStore.getCredentials(node, RED)
-    }
+    };
 
     if (credentials.refreshToken) {
       node.spotifyWebApi = new SpotifyWebApi(credentials);
@@ -57,7 +57,7 @@ module.exports = function (RED) {
 
     if (state !== null && code !== null) {
       tokenMap[state] = code;
-      res.send(successPageContent)
+      res.send(successPageContent);
     }
   });
 
@@ -84,7 +84,7 @@ module.exports = function (RED) {
         tokenMap = {};
       });
     }
-  })
+  });
 
   RED.nodes.registerType("spotify-api", SpotifyApiConfig, {
     credentials: {
@@ -93,4 +93,4 @@ module.exports = function (RED) {
       clientSecret: {type: "password"}
     }
   });
-}
+};
