@@ -65,8 +65,8 @@
       return location.protocol + "//" + location.host + pathname + "spotify/oauth";
     }
 
-    RED.nodes.registerType('spotify-api', {
-      category: 'config',
+    RED.nodes.registerType("spotify-api", {
+      category: "config",
       defaults: {
         name: {label: "Name", value: "My Spotify API", required: true},
         oauth: {label: "OAuth linking", value: "", required: true},
@@ -88,7 +88,6 @@
       oneditprepare: function () {
         const node = this;
 
-        // TODO: Get rid of that hardcoded URI.
         $("#node-config-input-redirectUri").val(getRedirectUri());
 
         if (isConfigurationSaved(node)) {

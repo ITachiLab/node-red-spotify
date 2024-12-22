@@ -5,7 +5,7 @@ module.exports = function (RED) {
     constructor(config) {
       super(RED, config);
 
-      this.on('input', this.onInput);
+      this.on("input", this.onInput);
     }
 
     onInput(msg, send, done) {
@@ -25,4 +25,4 @@ module.exports = function (RED) {
   }
 
   RED.nodes.registerType("play/pause", SpotifyPlayPause);
-}
+};
