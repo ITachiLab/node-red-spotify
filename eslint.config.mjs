@@ -1,7 +1,7 @@
 import globals from "globals";
 import pluginJs from "@eslint/js";
-import html from "eslint-plugin-html"
-import stylisticJs from "@stylistic/eslint-plugin-js"
+import html from "eslint-plugin-html";
+import stylisticJs from "@stylistic/eslint-plugin-js";
 
 /** @type {import('eslint').Linter.Config[]} */
 export default [
