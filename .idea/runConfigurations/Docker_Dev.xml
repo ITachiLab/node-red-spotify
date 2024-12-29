@@ -21,7 +21,7 @@
           <list>
             <DockerVolumeBindingImpl>
               <option name="containerPath" value="/data" />
-              <option name="hostPath" value="node_red_data2" />
+              <option name="hostPath" value="node_red_data" />
             </DockerVolumeBindingImpl>
           </list>
         </option>
