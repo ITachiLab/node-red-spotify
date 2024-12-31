@@ -1,0 +1,29 @@
+name: Node.js Package
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build --if-present
+      # TODO: Implement some tests - run: npm test
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v4.5.0
+        with:
+          name: node-red-spotify
+          path: itachilab-node-red-spotify-*.tgz
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0

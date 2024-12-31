@@ -6,6 +6,10 @@
     "type": "git",
     "url": "git+https://github.com/ITachiLab/node-red-spotify.git"
   },
+  "scripts": {
+    "prepare": "npx eslint lib spotify",
+    "build": "npm pack"
+  },
   "keywords": [
     "node-red",
     "spotify"
